@@ -42,6 +42,8 @@ pub(crate) const PI: [u64; 4] = [
     0x082e_fa98_ec4e_6c89,
 ];
 
+pub(crate) const PI_U128X2: [u128; 2] = crate::convert::u64x4_to_u128x2(PI);
+
 pub(crate) const PI2: [u64; 4] = [
     0x4528_21e6_38d0_1377,
     0xbe54_66cf_34e9_0c6c,
