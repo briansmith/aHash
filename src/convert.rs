@@ -19,38 +19,12 @@ macro_rules! convert {
     };
 }
 
-convert!([u128; 4], [u64; 8]);
-convert!([u128; 4], [u32; 16]);
-convert!([u128; 4], [u16; 32]);
-convert!([u128; 4], [u8; 64]);
 convert!([u128; 2], [u64; 4]);
-convert!([u128; 2], [u32; 8]);
-convert!([u128; 2], [u16; 16]);
-convert!([u128; 2], [u8; 32]);
 convert!(u128, [u64; 2]);
-convert!(u128, [u32; 4]);
-convert!(u128, [u16; 8]);
 convert!(u128, [u8; 16]);
-convert!([u64; 8], [u32; 16]);
-convert!([u64; 8], [u16; 32]);
-convert!([u64; 8], [u8; 64]);
-convert!([u64; 4], [u32; 8]);
-convert!([u64; 4], [u16; 16]);
-convert!([u64; 4], [u8; 32]);
 convert!([u64; 2], [u32; 4]);
-convert!([u64; 2], [u16; 8]);
-convert!([u64; 2], [u8; 16]);
-convert!([u32; 4], [u16; 8]);
-convert!([u32; 4], [u8; 16]);
-convert!([u16; 8], [u8; 16]);
-convert!(u64, [u32; 2]);
-convert!(u64, [u16; 4]);
 convert!(u64, [u8; 8]);
-convert!([u32; 2], [u16; 4]);
-convert!([u32; 2], [u8; 8]);
-convert!(u32, [u16; 2]);
 convert!(u32, [u8; 4]);
-convert!([u16; 2], [u8; 4]);
 convert!(u16, [u8; 2]);
 convert!([[u64; 4]; 2], [u8; 64]);
 
@@ -109,13 +83,19 @@ impl ReadFromSlice for [u8] {
     #[inline(always)]
     fn read_u128x2(&self) -> ([u128; 2], &[u8]) {
         let (value, rest) = self.split_at(32);
-        (as_array!(value, 32).convert(), rest)
+        let r0 = as_array!(&value[..16], 16).convert();
+        let r1 = as_array!(&value[16..], 16).convert();
+        ([r0, r1], rest)
     }
 
     #[inline(always)]
     fn read_u128x4(&self) -> ([u128; 4], &[u8]) {
         let (value, rest) = self.split_at(64);
-        (as_array!(value, 64).convert(), rest)
+        let r0 = as_array!(&value[..16], 16).convert();
+        let r1 = as_array!(&value[16..32], 16).convert();
+        let r2 = as_array!(&value[32..48], 16).convert();
+        let r3 = as_array!(&value[48..], 16).convert();
+        ([r0, r1, r2, r3], rest)
     }
 
     #[inline(always)]
@@ -145,12 +125,14 @@ impl ReadFromSlice for [u8] {
     #[inline(always)]
     fn read_last_u128x2(&self) -> [u128; 2] {
         let (_, value) = self.split_at(self.len() - 32);
-        as_array!(value, 32).convert()
+        let (r, _) = value.read_u128x2();
+        r
     }
 
     #[inline(always)]
     fn read_last_u128x4(&self) -> [u128; 4] {
         let (_, value) = self.split_at(self.len() - 64);
-        as_array!(value, 64).convert()
+        let (r, _) = value.read_u128x4();
+        r
     }
 }
