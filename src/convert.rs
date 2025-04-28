@@ -2,23 +2,6 @@ pub(crate) trait Convert<To> {
     fn convert(self) -> To;
 }
 
-macro_rules! convert {
-    ($a:ty, $b:ty) => {
-        impl Convert<$b> for $a {
-            #[inline(always)]
-            fn convert(self) -> $b {
-                zerocopy::transmute!(self)
-            }
-        }
-        impl Convert<$a> for $b {
-            #[inline(always)]
-            fn convert(self) -> $a {
-                zerocopy::transmute!(self)
-            }
-        }
-    };
-}
-
 macro_rules! convert_primitive_bytes {
     ($a:ty, $b:ty) => {
         impl Convert<$b> for $a {
@@ -36,15 +19,35 @@ macro_rules! convert_primitive_bytes {
     };
 }
 
-convert!(u128, [u64; 2]);
 convert_primitive_bytes!(u128, [u8; 16]);
-convert!([u64; 2], [u32; 4]);
-#[cfg(test)]
-convert!([u64; 2], [u8; 16]);
 convert_primitive_bytes!(u64, [u8; 8]);
 convert_primitive_bytes!(u32, [u8; 4]);
 convert_primitive_bytes!(u16, [u8; 2]);
-convert!([[u64; 4]; 2], [u8; 64]);
+
+impl Convert<u128> for [u64; 2] {
+    fn convert(self) -> u128 {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+
+impl Convert<[u64; 2]> for u128 {
+    fn convert(self) -> [u64; 2] {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+
+impl Convert<[u32; 4]> for [u64; 2] {
+    fn convert(self) -> [u32; 4] {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+
+impl Convert<[[u64; 4]; 2]> for [u8; 64] {
+    #[inline(always)]
+    fn convert(self) -> [[u64; 4]; 2] {
+        unsafe { core::mem::transmute(self) }
+    }
+}
 
 macro_rules! as_array {
     ($input:expr, $len:expr) => {{
